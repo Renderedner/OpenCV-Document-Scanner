@@ -39,6 +39,7 @@ class DocScanner(object):
         self.interactive = interactive
         self.MIN_QUAD_AREA_RATIO = MIN_QUAD_AREA_RATIO
         self.MAX_QUAD_ANGLE_RANGE = MAX_QUAD_ANGLE_RANGE        
+        self.process_image = True
 
     def filter_corners(self, corners, min_dist=20):
         """Filters corners that are within min_dist of others"""
@@ -259,12 +260,12 @@ class DocScanner(object):
         plt.imshow(rescaled_image)
         plt.show()
 
+        self.process_image = p.process_image
         new_points = p.get_poly_points()[:4]
         new_points = np.array([[p] for p in new_points], dtype = "int32")
         return new_points.reshape(4, 2)
 
     def scan(self, image_path):
-
         RESCALED_HEIGHT = 500.0
         OUTPUT_DIR = 'output'
 
@@ -287,15 +288,18 @@ class DocScanner(object):
         # apply the perspective transformation
         warped = transform.four_point_transform(orig, screenCnt * ratio)
 
-        # convert the warped image to grayscale
-        gray = cv2.cvtColor(warped, cv2.COLOR_BGR2GRAY)
+        if self.process_image:
+            # convert the warped image to grayscale
+            gray = cv2.cvtColor(warped, cv2.COLOR_BGR2GRAY)
 
-        # sharpen image
-        sharpen = cv2.GaussianBlur(gray, (0,0), 3)
-        sharpen = cv2.addWeighted(gray, 1.5, sharpen, -0.5, 0)
+            # sharpen image
+            sharpen = cv2.GaussianBlur(gray, (0,0), 3)
+            sharpen = cv2.addWeighted(gray, 1.5, sharpen, -0.5, 0)
 
-        # apply adaptive threshold to get black and white effect
-        thresh = cv2.adaptiveThreshold(sharpen, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 21, 15)
+            # apply adaptive threshold to get black and white effect
+            thresh = cv2.adaptiveThreshold(sharpen, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 21, 15)
+        else:
+            thresh = warped
 
         # save the transformed image
         basename = os.path.basename(image_path)

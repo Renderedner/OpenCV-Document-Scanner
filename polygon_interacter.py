@@ -1,6 +1,7 @@
 import numpy as np
 from matplotlib.lines import Line2D
 from matplotlib.artist import Artist
+from matplotlib import pyplot as plt
 
 
 class PolygonInteractor(object):
@@ -12,6 +13,7 @@ class PolygonInteractor(object):
     epsilon = 5  # max pixel distance to count as a vertex hit
 
     def __init__(self, ax, poly):
+        self.process_image = None
         if poly.figure is None:
             raise RuntimeError('You must first add the polygon to a figure or canvas before defining the interactor')
         self.ax = ax
@@ -29,7 +31,19 @@ class PolygonInteractor(object):
         canvas.mpl_connect('button_press_event', self.button_press_callback)
         canvas.mpl_connect('button_release_event', self.button_release_callback)
         canvas.mpl_connect('motion_notify_event', self.motion_notify_callback)
+        canvas.mpl_connect('key_press_event', self.key_press_callback)
         self.canvas = canvas
+
+    def key_press_callback(self, event):
+        'given key_press, set properties'
+        if event.key == 'j':
+            self.process_image = True
+            plt.close()
+            return
+        if event.key == 'k':
+            self.process_image = False
+            plt.close()
+            return
 
     def get_poly_points(self):
         return np.asarray(self.poly.xy)
