@@ -23,6 +23,8 @@ from pathlib import Path
 import argparse
 import os
 
+from pdb import set_trace
+
 class DocScanner(object):
     """An image scanner"""
 
@@ -41,6 +43,7 @@ class DocScanner(object):
         self.MIN_QUAD_AREA_RATIO = MIN_QUAD_AREA_RATIO
         self.MAX_QUAD_ANGLE_RANGE = MAX_QUAD_ANGLE_RANGE        
         self.process_image = True
+        self.need_rotation = None
 
     def filter_corners(self, corners, min_dist=20):
         """Filters corners that are within min_dist of others"""
@@ -264,6 +267,7 @@ k -> do only the transformation"""))
         plt.imshow(rescaled_image)
         plt.show()
 
+        self.need_rotation = p.need_rotation
         self.process_image = p.process_image
         new_points = p.get_poly_points()[:4]
         new_points = np.array([[p] for p in new_points], dtype = "int32")
@@ -303,6 +307,8 @@ k -> do only the transformation"""))
             thresh = cv2.adaptiveThreshold(sharpen, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 21, 15)
         else:
             thresh = warped
+
+        thresh = np.rot90(thresh, k=self.need_rotation, axes=(1, 0))
 
         # save the transformed image
         output_dir = Path(output_dir)

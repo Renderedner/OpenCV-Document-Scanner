@@ -2,7 +2,7 @@ import numpy as np
 from matplotlib.lines import Line2D
 from matplotlib.artist import Artist
 from matplotlib import pyplot as plt
-
+import matplotlib as mpl
 
 class PolygonInteractor(object):
     """
@@ -13,6 +13,9 @@ class PolygonInteractor(object):
     epsilon = 5  # max pixel distance to count as a vertex hit
 
     def __init__(self, ax, poly):
+        mpl.rcParams['keymap.yscale'] = []
+
+        self.need_rotation = 0
         self.process_image = None
         if poly.figure is None:
             raise RuntimeError('You must first add the polygon to a figure or canvas before defining the interactor')
@@ -43,6 +46,14 @@ class PolygonInteractor(object):
         if event.key == 'k':
             self.process_image = False
             plt.close()
+            return
+        if event.key == 'l':
+            self.need_rotation = self.need_rotation - 1
+            print(self.need_rotation)
+            return
+        if event.key == 'ç':
+            self.need_rotation = self.need_rotation + 1
+            print(self.need_rotation)
             return
 
     def get_poly_points(self):
