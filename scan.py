@@ -18,6 +18,7 @@ import itertools
 import math
 import cv2
 from pylsd.lsd import lsd
+from pathlib import Path
 
 import argparse
 import os
@@ -254,9 +255,12 @@ class DocScanner(object):
         poly = Polygon(screenCnt, animated=True, fill=False, color="yellow", linewidth=5)
         fig, ax = plt.subplots()
         ax.add_patch(poly)
-        ax.set_title(('Drag the corners of the box to the corners of the document. \n'
-            'Close the window when finished.'))
+        ax.set_title(("""Drag the corners of the box to the corners of t
+'Close the window when finished.
+j -> process image after transformation
+k -> do only the transformation"""))
         p = poly_i.PolygonInteractor(ax, poly)
+
         plt.imshow(rescaled_image)
         plt.show()
 
@@ -265,9 +269,8 @@ class DocScanner(object):
         new_points = np.array([[p] for p in new_points], dtype = "int32")
         return new_points.reshape(4, 2)
 
-    def scan(self, image_path):
+    def scan(self, image_path, output_dir='output'):
         RESCALED_HEIGHT = 500.0
-        OUTPUT_DIR = 'output'
 
         # load the image and compute the ratio of the old height
         # to the new height, clone it, and resize it
@@ -302,8 +305,11 @@ class DocScanner(object):
             thresh = warped
 
         # save the transformed image
+        output_dir = Path(output_dir)
+        if not output_dir.exists():
+            output_dir.mkdir()
         basename = os.path.basename(image_path)
-        cv2.imwrite(OUTPUT_DIR + '/' + basename, thresh)
+        cv2.imwrite(output_dir.joinpath(basename), thresh)
         print("Proccessed " + basename)
 
 
@@ -312,6 +318,7 @@ if __name__ == "__main__":
     group = ap.add_mutually_exclusive_group(required=True)
     group.add_argument("--images", help="Directory of images to be scanned")
     group.add_argument("--image", help="Path to single image to be scanned")
+    ap.add_argument("--output", help="Path to output dir, used when --images is used")
     ap.add_argument("-i", action='store_true',
         help = "Flag for manually verifying and/or setting document corners")
 
@@ -319,6 +326,7 @@ if __name__ == "__main__":
     im_dir = args["images"]
     im_file_path = args["image"]
     interactive_mode = args["i"]
+    output_dir = args["output"]
 
     scanner = DocScanner(interactive_mode)
 
@@ -334,4 +342,4 @@ if __name__ == "__main__":
     else:
         im_files = [f for f in os.listdir(im_dir) if get_ext(f) in valid_formats]
         for im in im_files:
-            scanner.scan(im_dir + '/' + im)
+            scanner.scan(im_dir + '/' + im, output_dir)
