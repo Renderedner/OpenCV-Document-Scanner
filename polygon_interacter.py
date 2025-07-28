@@ -67,6 +67,7 @@ class PolygonInteractor(object):
             self.ax.draw_artist(self.line)
             self.canvas.blit(self.ax.bbox)
             return
+
         if event.key == 't':
             if not self._ind:
                 self._ind = 0
@@ -88,6 +89,31 @@ class PolygonInteractor(object):
         if event.key == 'r':
             if not self._ind:
                 self._ind = 1
+                return
+            self._ind = None 
+            return
+
+        if event.key == 'n':
+            if not self._ind:
+                self._ind = (1, 2)
+                return
+            self._ind = None 
+            return
+        if event.key == 'm':
+            if not self._ind:
+                self._ind = (3, 0)
+                return
+            self._ind = None 
+            return
+        if event.key == 'b':
+            if not self._ind:
+                self._ind = (3, 2)
+                return
+            self._ind = None 
+            return
+        if event.key == ',':
+            if not self._ind:
+                self._ind = (0, 1)
                 return
             self._ind = None 
             return
@@ -165,13 +191,27 @@ class PolygonInteractor(object):
         self.prev_x = event.x
         self.prev_y = event.y
 
-        # set_trace()
-        self.poly.xy[self._ind] = self.poly.xy[self._ind][0] + dx, self.poly.xy[self._ind][1] + dy
-        if self._ind == 0:
-            self.poly.xy[-1] = self.poly.xy[self._ind][0] + dx, self.poly.xy[self._ind][1] + dy
-        elif self._ind == len(self.poly.xy) - 1:
-            self.poly.xy[0] = self.poly.xy[self._ind][0] + dx, self.poly.xy[self._ind][1] + dy
-        self.line.set_data(zip(*self.poly.xy))
+        if type(self._ind) == tuple:
+            self.poly.xy[self._ind[0]] = self.poly.xy[self._ind[0]][0] + dx, self.poly.xy[self._ind[0]][1] + dy
+            if self._ind[0] == 0:
+                self.poly.xy[-1] = self.poly.xy[self._ind[0]][0] + dx, self.poly.xy[self._ind[0]][1] + dy
+            elif self._ind[0] == len(self.poly.xy) - 1:
+                self.poly.xy[0] = self.poly.xy[self._ind[0]][0] + dx, self.poly.xy[self._ind[0]][1] + dy
+            self.line.set_data(zip(*self.poly.xy))
+            
+            self.poly.xy[self._ind[1]] = self.poly.xy[self._ind[1]][0] + dx, self.poly.xy[self._ind[1]][1] + dy
+            if self._ind[1] == 0:
+                self.poly.xy[-1] = self.poly.xy[self._ind[1]][0] + dx, self.poly.xy[self._ind[1]][1] + dy
+            elif self._ind[1] == len(self.poly.xy) - 1:
+                self.poly.xy[0] = self.poly.xy[self._ind[1]][0] + dx, self.poly.xy[self._ind[1]][1] + dy
+            self.line.set_data(zip(*self.poly.xy))
+        else:
+            self.poly.xy[self._ind] = self.poly.xy[self._ind][0] + dx, self.poly.xy[self._ind][1] + dy
+            if self._ind == 0:
+                self.poly.xy[-1] = self.poly.xy[self._ind][0] + dx, self.poly.xy[self._ind][1] + dy
+            elif self._ind == len(self.poly.xy) - 1:
+                self.poly.xy[0] = self.poly.xy[self._ind][0] + dx, self.poly.xy[self._ind][1] + dy
+            self.line.set_data(zip(*self.poly.xy))
 
 
         self.canvas.restore_region(self.background)
