@@ -3,6 +3,7 @@ from matplotlib.lines import Line2D
 from matplotlib.artist import Artist
 from matplotlib import pyplot as plt
 import matplotlib as mpl
+from pdb import set_trace
 
 class PolygonInteractor(object):
     """
@@ -12,8 +13,9 @@ class PolygonInteractor(object):
     showverts = True
     epsilon = 5  # max pixel distance to count as a vertex hit
 
-    def __init__(self, ax, poly):
+    def __init__(self, ax, poly, image_width):
         mpl.rcParams['keymap.yscale'] = []
+        self.image_width = image_width
 
         self.need_rotation = 0
         self.process_image = None
@@ -22,6 +24,7 @@ class PolygonInteractor(object):
         self.ax = ax
         canvas = poly.figure.canvas
         self.poly = poly
+        print(poly.xy)
 
         x, y = zip(*self.poly.xy)
         self.line = Line2D(x, y, marker='o', markerfacecolor='r', animated=True)
@@ -54,6 +57,13 @@ class PolygonInteractor(object):
         if event.key == 'ç':
             self.need_rotation = self.need_rotation + 1
             print(self.need_rotation)
+            return
+        if event.key == 'a':
+            self.poly.xy = [[self.image_width, 0.], [self.image_width, 500.], [0., 500.], [0., 0.], [self.image_width, 0.]]
+            self.canvas.restore_region(self.background)
+            self.ax.draw_artist(self.poly)
+            self.ax.draw_artist(self.line)
+            self.canvas.blit(self.ax.bbox)
             return
 
     def get_poly_points(self):

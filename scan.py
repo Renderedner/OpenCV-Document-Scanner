@@ -25,6 +25,8 @@ import os
 
 from pdb import set_trace
 
+import re
+
 class DocScanner(object):
     """An image scanner"""
 
@@ -262,7 +264,9 @@ class DocScanner(object):
 'Close the window when finished.
 j -> process image after transformation
 k -> do only the transformation"""))
-        p = poly_i.PolygonInteractor(ax, poly)
+
+        p = poly_i.PolygonInteractor(ax, poly, rescaled_image.shape[1])
+        #                                      image_width
 
         plt.imshow(rescaled_image)
         plt.show()
@@ -287,7 +291,15 @@ k -> do only the transformation"""))
         rescaled_image = imutils.resize(image, height = int(RESCALED_HEIGHT))
 
         # get the contour of the document
-        screenCnt = self.get_contour(rescaled_image)
+        try:
+            screenCnt = self.get_contour(rescaled_image)
+        except Exception as e:
+            with open('auto_contour_error_log.txt', 'a') as file:
+                file.write(str(type(e)) + str(image_path) + '\n')
+            screenCnt = [[rescaled_image.shape[1], 0],
+                        [rescaled_image.shape[1], rescaled_image.shape[0]],
+                        [0, rescaled_image.shape[0]],
+                        [0,0]]
 
         if self.interactive:
             screenCnt = self.interactive_get_contour(screenCnt, rescaled_image)
@@ -310,6 +322,15 @@ k -> do only the transformation"""))
 
         thresh = np.rot90(thresh, k=self.need_rotation, axes=(1, 0))
 
+        # Storing contour information
+        points = re.sub(r"\s+", " ", re.sub(r"\n", " ",screenCnt.__str__()))
+        contour_txt_path = Path("contour-points.txt")
+        write_or_append = "a"
+        if not contour_txt_path.exists():
+            write_or_append = "w"
+        with open(contour_txt_path, write_or_append) as file:
+            file.write("\"" + image_path  + "\",\t" + points + "\n")
+
         # save the transformed image
         output_dir = Path(output_dir)
         if not output_dir.exists():
@@ -329,10 +350,10 @@ if __name__ == "__main__":
         help = "Flag for manually verifying and/or setting document corners")
 
     args = vars(ap.parse_args())
-    im_dir = args["images"]
-    im_file_path = args["image"]
+    im_dir = os.path.expanduser(args["images"]) if args["images"] else None
+    im_file_path = os.path.expanduser(args["image"]) if args["image"] else None
     interactive_mode = args["i"]
-    output_dir = args["output"]
+    output_dir = os.path.expanduser(args["output"]) if args["output"] else None
 
     scanner = DocScanner(interactive_mode)
 
@@ -342,7 +363,7 @@ if __name__ == "__main__":
 
     # Scan single image specified by command line argument --image <IMAGE_PATH>
     if im_file_path:
-        scanner.scan(im_file_path)
+        scanner.scan(im_file_path, output_dir)
 
     # Scan all valid images in directory specified by command line argument --images <IMAGE_DIR>
     else:
