@@ -34,11 +34,13 @@ class PolygonInteractor(object):
         self._ind = None  # the active vert
 
         canvas.mpl_connect('draw_event', self.draw_callback)
-        canvas.mpl_connect('button_press_event', self.button_press_callback)
-        canvas.mpl_connect('button_release_event', self.button_release_callback)
+        #canvas.mpl_connect('button_press_event', self.button_press_callback)
+        #canvas.mpl_connect('button_release_event', self.button_release_callback)
         canvas.mpl_connect('motion_notify_event', self.motion_notify_callback)
         canvas.mpl_connect('key_press_event', self.key_press_callback)
         self.canvas = canvas
+
+        self.prev_x, self.prev_y = None, None
 
     def key_press_callback(self, event):
         'given key_press, set properties'
@@ -64,6 +66,30 @@ class PolygonInteractor(object):
             self.ax.draw_artist(self.poly)
             self.ax.draw_artist(self.line)
             self.canvas.blit(self.ax.bbox)
+            return
+        if event.key == 't':
+            if not self._ind:
+                self._ind = 0
+                return
+            self._ind = None 
+            return
+        if event.key == 'w':
+            if not self._ind:
+                self._ind = 3
+                return
+            self._ind = None 
+            return
+        if event.key == 'e':
+            if not self._ind:
+                self._ind = 2
+                return
+            self._ind = None 
+            return
+        if event.key == 'r':
+            if not self._ind:
+                self._ind = 1
+                return
+            self._ind = None 
             return
 
     def get_poly_points(self):
@@ -117,23 +143,36 @@ class PolygonInteractor(object):
         self._ind = None
 
     def motion_notify_callback(self, event):
-        'on mouse movement'
-        if not self.showverts:
-            return
-        if self._ind is None:
+        'on mouse movement'                               # Aqui eu posso começar a fazer as minhas coisas.
+        if not self.showverts:                            # Aqui eu penso em colocar uma parada que salve as coordenadas antigas do mouse
+            return                                        # de forma que na próxima vez que o mouse for movido, essas coordenadas antigas
+        if self._ind is None:                             # sejam utilizadas para que tenhamos uma direção, e possamos mover o vertice, sem
+            self.prev_x, self.prev_y = None, None         # que o mouse esteja sobre ele.
             return
         if event.inaxes is None:
             return
-        if event.button != 1:
+        # if event.button != 1:
+        #     return
+        if self.prev_x is None:
+            self.prev_x, self.prev_y = event.x, event.y
             return
-        x, y = event.xdata, event.ydata
 
-        self.poly.xy[self._ind] = x, y
+        # << DX and DY >>
+        # x, y   = event.xdata, event.ydata
+        dx = event.x - self.prev_x
+        dy = self.prev_y - event.y 
+
+        self.prev_x = event.x
+        self.prev_y = event.y
+
+        # set_trace()
+        self.poly.xy[self._ind] = self.poly.xy[self._ind][0] + dx, self.poly.xy[self._ind][1] + dy
         if self._ind == 0:
-            self.poly.xy[-1] = x, y
+            self.poly.xy[-1] = self.poly.xy[self._ind][0] + dx, self.poly.xy[self._ind][1] + dy
         elif self._ind == len(self.poly.xy) - 1:
-            self.poly.xy[0] = x, y
+            self.poly.xy[0] = self.poly.xy[self._ind][0] + dx, self.poly.xy[self._ind][1] + dy
         self.line.set_data(zip(*self.poly.xy))
+
 
         self.canvas.restore_region(self.background)
         self.ax.draw_artist(self.poly)
